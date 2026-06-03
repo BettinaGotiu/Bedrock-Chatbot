@@ -1,0 +1,17 @@
+{
+  "activeSession": "default-bedrock",
+  "sessions": {
+    "default-bedrock": {
+      "apiKey": "your-aws-bedrock-openai-api-key-here",
+      "baseURL": "https://api.openai.com/v1"
+    },
+    "staging-session": {
+      "apiKey": "staging-api-key-here",
+      "baseURL": "https://api.openai.com/v1"
+    },
+    "production-session": {
+      "apiKey": "production-api-key-here",
+      "baseURL": "https://api.openai.com/v1"
+    }
+  }
+}

@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS Bedrock AI Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-main: #ffffff;
+            --bg-panel: #ffffff;
+            --text-primary: #000000;
+            --text-secondary: #555555;
+            --border-color: #000000;
+            --msg-user: #ffffff;
+            --msg-ai: #f8f9fa;
+            --input-bg: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* App Container Neo-Brutalist Layout */
+        .app-container {
+            width: 90%;
+            max-width: 950px;
+            height: 85vh;
+            background-color: var(--bg-panel);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 4px 4px 0px 0px var(--border-color);
+            overflow: hidden;
+        }
+
+        /* App Header */
+        .header {
+            padding: 20px 30px;
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: var(--bg-panel);
+        }
+
+        .header-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-container {
+            width: 36px;
+            height: 36px;
+            background-color: var(--text-primary);
+            color: var(--bg-main);
+            border-radius: 6px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.9rem;
+            font-weight: 800;
+        }
+
+        .header-title h1 {
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+            color: var(--text-primary);
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            border: 2px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 8px;
+            background-color: var(--bg-panel);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #000000;
+            border-radius: 50%;
+        }
+
+        /* Messages Area */
+        .chat-messages {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            background-color: var(--bg-main);
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        /* Welcome Message Screen */
+        .welcome-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .welcome-screen h2 {
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            letter-spacing: -0.3px;
+        }
+
+        .welcome-screen p {
+            max-width: 400px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            line-height: 1.5;
+        }
+
+        /* Chat Message Bubbles */
+        .message {
+            display: flex;
+            gap: 12px;
+            max-width: 80%;
+        }
+
+        .message.user-message {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .message.ai-message {
+            align-self: flex-start;
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.75rem;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        .user-message .avatar {
+            background-color: var(--text-primary);
+            color: var(--bg-main);
+        }
+
+        .ai-message .avatar {
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+        }
+
+        .message-content {
+            padding: 12px 18px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            line-height: 1.6;
+            word-break: break-word;
+            box-shadow: 3px 3px 0px 0px var(--border-color);
+        }
+
+        .user-message .message-content {
+            background-color: var(--msg-user);
+            color: var(--text-primary);
+        }
+
+        .ai-message .message-content {
+            background-color: var(--msg-ai);
+            color: var(--text-primary);
+        }
+
+        /* Format Styling for AI Output */
+        .message-content p {
+            margin-bottom: 10px;
+        }
+        .message-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .message-content code {
+            font-family: monospace;
+            background: #eeeeee;
+            border: 1px solid var(--border-color);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            color: var(--text-primary);
+        }
+
+        .message-content pre {
+            background: #f8f9fa;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            margin: 10px 0;
+            overflow-x: auto;
+            box-shadow: 2px 2px 0px 0px var(--border-color);
+        }
+
+        .message-content pre code {
+            background: transparent;
+            border: none;
+            padding: 0;
+            color: var(--text-primary);
+        }
+
+        .message-content strong {
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+
+        /* Thinking Indicator */
+        .thinking-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .thinking-text {
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        .dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .dots span {
+            width: 6px;
+            height: 6px;
+            background: var(--text-primary);
+            border-radius: 50%;
+            animation: dotFlashing 1s infinite alternate;
+        }
+
+        .dots span:nth-child(2) { animation-delay: 0.2s; }
+        .dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        /* Bottom Fixed Chat Input Bar */
+        .input-bar {
+            padding: 20px 30px;
+            border-top: 2px solid var(--border-color);
+            background-color: var(--bg-panel);
+        }
+
+        .input-form {
+            display: flex;
+            gap: 12px;
+            background-color: var(--input-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 6px 6px 6px 16px;
+            align-items: center;
+            box-shadow: 3px 3px 0px 0px var(--border-color);
+        }
+
+        .chat-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            font-weight: 500;
+            font-family: inherit;
+            padding: 10px 0;
+        }
+
+        .chat-input::placeholder {
+            color: #888888;
+        }
+
+        .send-btn {
+            background-color: var(--text-primary);
+            border: 2px solid var(--border-color);
+            outline: none;
+            color: var(--bg-main);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.1s ease;
+        }
+
+        .send-btn:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 2px 2px 0px 0px var(--border-color);
+        }
+
+        .send-btn:active {
+            transform: translate(1px, 1px);
+            box-shadow: none;
+        }
+
+        .send-btn:disabled {
+            background-color: #eeeeee;
+            color: #888888;
+            border-color: #888888;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        @keyframes dotFlashing {
+            0% { opacity: 0.3; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1.1); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .app-container {
+                width: 95%;
+                height: 90vh;
+            }
+            .chat-messages {
+                padding: 20px;
+            }
+            .message {
+                max-width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <header class="header">
+            <div class="header-info">
+                <div class="logo-container">AI</div>
+                <div class="header-title">
+                    <h1>Bedrock Intelligent Assistant</h1>
+                </div>
+            </div>
+            <div class="status-badge">
+                <div class="status-dot"></div>
+                <span>AWS Bedrock Live</span>
+            </div>
+        </header>
+
+        <main class="chat-messages" id="chat-messages">
+            <div class="welcome-screen" id="welcome-screen">
+                <h2>AWS Bedrock AI Client</h2>
+                <p>Start a conversation to see the backend integration with Bedrock. Type a prompt below to communicate with the model.</p>
+            </div>
+        </main>
+
+        <footer class="input-bar">
+            <form class="input-form" id="chat-form">
+                <input 
+                    type="text" 
+                    id="user-input" 
+                    class="chat-input" 
+                    placeholder="Type your prompt here..." 
+                    autocomplete="off"
+                    required
+                >
+                <button type="submit" class="send-btn" id="send-btn">
+                    <span>Send</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </form>
+        </footer>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chat-messages');
+        const chatForm = document.getElementById('chat-form');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const welcomeScreen = document.getElementById('welcome-screen');
+
+        function formatAIResponse(text) {
+            let escaped = text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+            
+            escaped = escaped.replace(/```([\s\S]*?)```/g, (match, code) => {
+                return `<pre><code>${code.trim()}</code></pre>`;
+            });
+
+            escaped = escaped.replace(/`([^`]+)`/g, '<code>$1</code>');
+            escaped = escaped.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            escaped = escaped.replace(/\n/g, '<br>');
+
+            return escaped;
+        }
+
+        function appendMessage(sender, text) {
+            if (welcomeScreen) {
+                welcomeScreen.style.display = 'none';
+            }
+
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', sender === 'user' ? 'user-message' : 'ai-message');
+            
+            const avatar = document.createElement('div');
+            avatar.classList.add('avatar');
+            avatar.innerHTML = sender === 'user' ? 'USR' : 'SYS';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.classList.add('message-content');
+            
+            if (sender === 'user') {
+                contentDiv.textContent = text;
+            } else {
+                contentDiv.innerHTML = formatAIResponse(text);
+            }
+            
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(contentDiv);
+            chatMessages.appendChild(messageDiv);
+            
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function showThinkingLoader() {
+            const loaderDiv = document.createElement('div');
+            loaderDiv.id = 'thinking-loader';
+            loaderDiv.classList.add('message', 'ai-message');
+            
+            const avatar = document.createElement('div');
+            avatar.classList.add('avatar');
+            avatar.innerHTML = 'SYS';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.classList.add('message-content');
+            contentDiv.innerHTML = `
+                <div class="thinking-container">
+                    <span class="thinking-text">Thinking</span>
+                    <div class="dots">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+            `;
+            
+            loaderDiv.appendChild(avatar);
+            loaderDiv.appendChild(contentDiv);
+            chatMessages.appendChild(loaderDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function removeThinkingLoader() {
+            const loader = document.getElementById('thinking-loader');
+            if (loader) {
+                loader.remove();
+            }
+        }
+
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            appendMessage('user', message);
+            
+            userInput.value = '';
+            userInput.disabled = true;
+            sendBtn.disabled = true;
+            
+            showThinkingLoader();
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message })
+                });
+
+                const data = await response.json();
+                
+                removeThinkingLoader();
+
+                if (response.ok) {
+                    appendMessage('ai', data.text);
+                } else {
+                    appendMessage('ai', `Error: ${data.details || data.error}`);
+                }
+            } catch (err) {
+                removeThinkingLoader();
+                appendMessage('ai', `System Error: Unable to reach the server. Please check if your server is running.`);
+                console.error("Network error:", err);
+            } finally {
+                userInput.disabled = false;
+                sendBtn.disabled = false;
+                userInput.focus();
+            }
+        });
+    </script>
+</body>
+</html>
